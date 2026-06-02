@@ -1,6 +1,6 @@
 # SP Manual Workflow Skills
 
-A simplified, manual-stage derivative of selected Superpowers workflow skills.
+A simplified, manual-stage derivative of selected [Superpowers](https://github.com/obra/superpowers) workflow skills.
 
 Install by copying these directories into a compatible skills directory such as:
 
