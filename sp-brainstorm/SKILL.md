@@ -1,6 +1,6 @@
 ---
 name: sp-brainstorm
-description: Use manually at the start of a feature, product change, refactor, or engineering idea before planning or coding. Clarify the request, inspect existing project context, ask targeted questions, compare approaches, and write an approved specification to docs/sp/specs/. Do not generate an implementation plan, modify production code, or invoke the next stage automatically.
+description: Use manually at the start of any feature, product change, refactor, bug-adjacent behaviour change, or engineering idea before planning or coding. Clarify the request, inspect existing project context, ask targeted questions, compare approaches, and write an approved specification to docs/sp/specs/. Even simple changes need at least a short design. Do not generate an implementation plan, modify production code, commit, or invoke the next stage automatically.
 ---
 
 # SP Brainstorm
@@ -13,7 +13,7 @@ Turn a vague request into a reviewed specification. This is stage 1 of a manual,
 
 Input:
 - A user idea, problem, feature request, refactor goal, or product change.
-- Optional repo context, docs, constraints, examples, screenshots, or tickets.
+- Optional repo context, docs, constraints, examples, screenshots, tickets, or previous decisions.
 
 Output:
 - One written spec at `docs/sp/specs/YYYY-MM-DD--<slug>-spec.md`.
@@ -26,6 +26,10 @@ Hard boundaries:
 - Do not auto-invoke `/sp-plan`; only suggest it.
 - Do not commit unless the user explicitly asks.
 
+## Non-Negotiable Design Gate
+
+Do not skip this stage because the change looks simple. For a tiny change, the design can be only a few paragraphs, but it must still clarify intent, constraints, and acceptance criteria before planning or coding.
+
 ## Process
 
 ### 1. Inspect Context First
@@ -34,8 +38,9 @@ Before asking detailed questions, inspect the current project when available:
 - Existing README, docs, architecture notes, package files, tests, and recent conventions.
 - Similar features or modules already present.
 - Obvious constraints from framework, platform, deployment, APIs, persistence, auth, or UI patterns.
+- Prior specs or plans in `docs/sp/` or `docs/superpowers/` that may affect this work.
 
-If context is unavailable, say so and continue with best-effort questions.
+If context is unavailable, say so and continue with best-effort questions. Make assumptions explicit in the spec.
 
 ### 2. Scope Gate
 
@@ -44,6 +49,7 @@ If the request contains multiple independent systems, pause and decompose it.
 Examples that need decomposition:
 - A platform with auth, billing, chat, analytics, and admin tools.
 - A mobile feature plus backend changes plus migration plus analytics.
+- A rewrite, new UI surface, and data model change that can ship independently.
 
 Ask the user which sub-project should be specified first. Each sub-project gets its own spec-plan-develop-review loop.
 
@@ -85,6 +91,12 @@ Cover when relevant:
 - Testing and acceptance criteria.
 - Rollout, migration, compatibility, and rollback.
 - Security, privacy, and performance considerations.
+
+Design for isolation and clarity:
+- Prefer small units with one clear purpose.
+- Define interfaces so a reader can understand what a unit does without reading internals.
+- Follow existing project patterns unless a targeted improvement is needed for this work.
+- Avoid unrelated refactors.
 
 Ask for approval before writing the file.
 
@@ -141,8 +153,9 @@ Before final response, review the written spec for:
 - Ambiguous phrasing that could be interpreted two ways.
 - Scope too large for one plan.
 - Missing edge cases or failure states.
+- Architecture/component boundaries that are unclear or too broad.
 
-Fix issues inline.
+Fix issues inline. No separate reviewer/subagent loop is required for this manual workflow.
 
 ## Final Response Format
 

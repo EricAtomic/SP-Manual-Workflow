@@ -1,6 +1,6 @@
 ---
 name: sp-plan
-description: Use manually after a spec exists and before editing code. Read an approved spec, inspect the repository, and create a detailed execution plan at docs/sp/plans/. The plan must be concrete enough for a separate development session to execute. Do not modify production code, run implementation, or invoke the next stage automatically.
+description: Use manually after a spec exists and before editing code. Read an approved spec, inspect the repository, and create a detailed execution plan at docs/sp/plans/. The plan must be concrete enough for a separate development session to execute with limited context: exact files, test-first steps, commands, expected outcomes, and review hooks. Do not modify production code, run implementation, commit, or invoke the next stage automatically.
 ---
 
 # SP Plan
@@ -13,7 +13,7 @@ Convert an approved specification into a concrete execution plan. This is stage 
 
 Input:
 - A spec file path, usually `docs/sp/specs/YYYY-MM-DD--<slug>-spec.md`.
-- Optional user constraints such as target milestone, preferred implementation order, or test command.
+- Optional user constraints such as target milestone, preferred implementation order, allowed scope, or test command.
 
 Output:
 - One plan at `docs/sp/plans/YYYY-MM-DD--<slug>-plan.md`.
@@ -25,6 +25,10 @@ Hard boundaries:
 - Do not auto-invoke `/sp-develop`; only suggest it.
 - Do not commit unless the user explicitly asks.
 
+## Planning Assumption
+
+Write for a capable developer or agent who has limited project context and may execute the plan in a fresh session. The plan must carry enough context to prevent guessing.
+
 ## Process
 
 ### 1. Load and Check the Spec
@@ -33,6 +37,7 @@ Read the spec completely. Confirm it is ready for planning:
 - It has a goal, non-goals, proposed design, and acceptance criteria.
 - Blocking open questions are resolved.
 - Scope is small enough for one plan.
+- The feature can produce working, testable software on its own.
 
 If the spec is too broad, propose a split and stop. Do not produce a vague mega-plan.
 
@@ -54,11 +59,11 @@ Before task decomposition, list the expected files:
 - Tests to add or update.
 - Docs/config/migration files if relevant.
 
-Prefer small, focused changes. Avoid unrelated refactors. If a touched file is already too large or tangled, include only a targeted cleanup that supports this feature.
+Prefer small, focused files with clear responsibilities. Split by responsibility and change affinity, not by abstract technical layer. Avoid unrelated refactors. If a touched file is already too large or tangled, include only a targeted cleanup that supports this feature.
 
 ### 4. Write Bite-Sized Tasks
 
-Each task should produce a coherent, reviewable increment.
+Each task should produce a coherent, reviewable increment. Each step should be one concrete action, generally 2-5 minutes of work.
 
 For each task include:
 - Objective.
@@ -83,15 +88,26 @@ Bad steps are vague:
 - Similar to previous task.
 - Clean up code.
 
-### 5. Include Review Hooks
+### 5. No Placeholders
+
+These are plan failures and must be fixed before saving:
+- `TBD`, `TODO`, `later`, `fill in details`, or `as needed`.
+- "Add appropriate error handling" without exact conditions and expected behaviour.
+- "Write tests" without naming test files, behaviours, and commands.
+- "Similar to Task N" instead of repeating necessary detail.
+- Referencing types, functions, flags, routes, or schema fields not defined in the plan or already present in the repo.
+- Code-changing steps that do not show what shape the code should take when the details matter.
+
+### 6. Include Review Hooks
 
 The plan must make review easy. Include:
 - How to verify each task.
 - What visible behaviour should change.
 - What files or areas reviewers should inspect.
-- Known risks.
+- Known risks and expected edge cases.
+- Which deviations are acceptable and which require user approval.
 
-### 6. Save the Plan
+### 7. Save the Plan
 
 Save to:
 
@@ -141,15 +157,18 @@ Spec: docs/sp/specs/YYYY-MM-DD--<slug>-spec.md
 ## Done Criteria
 ```
 
-## Self-Review
+### 8. Self-Review
 
 Before final response, check:
 - Every spec requirement maps to at least one task.
 - Every task has exact file paths or explicit discovery instructions.
 - Every behavioural change has a test-first step unless explicitly exempted.
-- No TBD/TODO/fill-in-later placeholders remain.
-- Commands are concrete and scoped.
+- No placeholders or vague plan failures remain.
+- Commands are concrete, scoped, and include expected outcomes.
+- Types, names, routes, config keys, and method signatures are consistent across tasks.
 - The plan can be executed in a fresh session with limited context.
+
+Fix issues inline. No separate reviewer/subagent loop is required for this manual workflow.
 
 ## Final Response Format
 
