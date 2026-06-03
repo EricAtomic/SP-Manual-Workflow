@@ -6,7 +6,15 @@ Install by copying these directories into a compatible skills directory such as:
 
 - Claude Code: `~/.claude/skills/`
 - GitHub Copilot CLI: `~/.copilot/skills/`
-- Codex: `~/.agents/skills/` or project `.agents/skills/`
+- Codex: `~/.agents/skills/`
+
+Or run the installer script:
+
+```bash
+./install.sh
+```
+
+The script installs into any supported global agent folder that already exists and skips the ones that are not present.
 
 ## Skills
 
