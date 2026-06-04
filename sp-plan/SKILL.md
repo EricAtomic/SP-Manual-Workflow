@@ -1,6 +1,6 @@
 ---
 name: sp-plan
-description: Use manually after a spec exists and before editing code. Read an approved spec, inspect the repository, and create a detailed execution plan at docs/sp/plans/. The plan must be concrete enough for a separate development session to execute with limited context: exact files, test-first steps, commands, expected outcomes, and review hooks. Do not modify production code, run implementation, commit, or invoke the next stage automatically.
+description: "Use manually after a spec exists and before editing code. Read an approved spec, inspect the repository, and create a detailed execution plan at docs/sp/plans/. The plan must be concrete enough for a separate development session to execute with limited context: exact files, test-first steps, commands, expected outcomes, and review hooks. Do not modify production code, run implementation, commit, or invoke the next stage automatically."
 ---
 
 # SP Plan
