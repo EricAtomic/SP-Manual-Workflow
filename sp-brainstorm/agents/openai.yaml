@@ -1,0 +1,10 @@
+interface:
+  display_name: SP Brainstorm
+  short_description: Manual design/specification gate before implementation.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

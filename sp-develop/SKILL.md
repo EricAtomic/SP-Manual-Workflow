@@ -1,161 +1,154 @@
 ---
 name: sp-develop
-description: Use manually to implement an execution plan or to apply a review report from sp-review. This skill may edit code, tests, docs, and configuration. It follows the plan, uses test-first development for behaviour changes, evaluates review feedback technically before implementing it, records development notes when useful, and stops with a suggestion to run sp-review. It does not perform final approval or skip review.
+description: manual plan execution workflow for implementing a written plan task-by-task in the current session. use when the user says to execute, implement, continue, work through a plan, or perform inline development. enforces preflight plan review, no implementation on main/master without explicit consent, strict red-green-refactor tdd, fresh verification evidence before completion claims, blocker-only pauses, task tracking, commits, and handoff to sp-review at review points.
 ---
 
 # SP Develop
 
-Implement a plan or address a review report. This is the only stage in the core workflow that should normally edit production code.
+Use this skill to execute a written implementation plan inline in the current session. It combines the current `executing-plans`, `test-driven-development`, and `verification-before-completion` behaviours for manual workflows.
 
-Manual loop:
+Announce that you are using `sp-develop` to implement the plan.
 
-`/sp-develop <plan> -> /sp-review <spec> <plan>`
+## Non-negotiable rules
 
-If review requests changes:
+- Do not start implementation on `main` or `master` without explicit user consent.
+- Load and review the plan before editing files.
+- Follow the plan task-by-task and step-by-step.
+- Stop only for real blockers, critical plan gaps, unclear instructions, missing dependencies, repeated verification failures, or user-requested checkpoints.
+- Do not pause after arbitrary batches just to report progress.
+- No production code before a failing test for behaviour changes.
+- No completion claim without fresh verification evidence from the current session.
+- Ask for clarification instead of guessing when the plan is unsafe or ambiguous.
 
-`/sp-develop <review-report> -> /sp-review <spec> <plan> <previous-review>`
+## Preflight
 
-## Stage Contract
+1. Read the plan file or user-provided plan.
+2. Inspect the current branch and workspace state.
+3. If on `main` or `master`, ask for explicit consent before editing, or create/switch to a feature branch if the user has already authorised that workflow.
+4. Review the plan critically:
+   - missing files or dependencies
+   - undefined symbols or impossible commands
+   - test strategy gaps
+   - risky migrations or destructive steps
+   - conflicts with the current codebase
+5. If critical concerns exist, raise them before starting.
+6. If no blocking concerns exist, create a task list and begin.
 
-Input, one of:
-- A plan file, usually `docs/sp/plans/YYYY-MM-DD--<slug>-plan.md`.
-- A review report, usually `docs/sp/reviews/YYYY-MM-DD--<slug>-review-N.md`.
-- A user instruction naming which plan tasks or review issues to handle.
+## Execution loop
 
-Output:
-- Code/test/doc/config changes.
-- Optional dev notes at `docs/sp/dev-notes/YYYY-MM-DD--<slug>-dev-notes.md`.
-- A short final message with changed files, verification evidence, and the suggested next manual command.
+For each plan task:
 
-Hard boundaries:
-- Do not mark the work final or ready to merge. That is for review and the user's normal release process.
-- Do not auto-invoke `/sp-review`; only suggest it.
-- Do not work on `main` or `master` unless the user explicitly permits it.
-- Do not silently skip tests or verification.
-- Do not ignore Critical or Important review findings.
-- Do not implement unclear review feedback; clarify first.
+1. Mark the task in progress.
+2. Follow each checkbox step exactly.
+3. Apply TDD for behaviour changes.
+4. Run the exact verification command from the plan.
+5. Read the full output and exit code.
+6. Fix failures before proceeding, unless the failure reveals a blocker that needs user input.
+7. Commit when the plan asks for a commit and verification is clean.
+8. Request or perform review at the planned checkpoint.
+9. Mark the task complete only after verification evidence supports completion.
 
-## Initial Safety Check
+Do not silently skip steps. If a planned step is wrong, explain the problem and update the plan or ask the user.
 
-Before editing:
-- Check current branch and working tree status.
-- If on `main` or `master`, ask before making changes unless the user already authorised it.
-- If there are unrelated local changes, avoid touching them and mention them.
-- Read the referenced plan or review report completely.
-
-If the input is a review report, also locate the original spec and plan paths from the report. If missing, ask for them or proceed only on the explicitly listed issues.
-
-## Development Modes
-
-### Mode A: Execute a Plan
-
-1. Load the plan.
-2. Review it critically before editing. If it has contradictions, missing files, impossible commands, or scope conflicts with the spec, stop and report the issue.
-3. Identify the next unchecked task, the task requested by the user, or the full set of tasks if the user explicitly asked to execute the whole plan.
-4. Execute task steps in order.
-5. Update checkboxes only for steps actually completed.
-6. Run the specified verification commands.
-7. Record notes for anything changed from the plan.
-
-If the user asked for a specific task or small batch, stop after that scope and recommend review. If the user asked for the whole plan, continue task-by-task without asking "should I continue?" unless you hit a blocker, ambiguity, repeated verification failure, or all tasks are complete.
-
-### Mode B: Apply a Review Report
-
-1. Load review report.
-2. Read all findings before editing.
-3. Restate or internally understand what each required change demands.
-4. Verify each finding against the actual codebase; do not blindly implement incorrect feedback.
-5. Prioritise Critical, then Important, then Minor if requested.
-6. For each issue, understand the root cause before editing.
-7. Add or update tests when the issue affects behaviour.
-8. Make the smallest safe fix.
-9. Run targeted verification.
-10. Record which review issues were addressed.
-
-Do not dismiss a review issue without evidence. If you believe the reviewer is wrong, explain why and cite code/tests. If the finding is unclear, ask for clarification before implementing any dependent work.
-
-## Test-First Rule
-
-For behaviour changes and bug fixes:
-
-1. Write a focused failing test first.
-2. Run it and confirm it fails for the expected reason.
-3. Implement the minimal production change.
-4. Run the test and confirm it passes.
-5. Refactor only while tests stay green.
-
-Core rule:
+## TDD iron law
 
 ```text
-No production-code change for behaviour without a test that failed first.
+no production code without a failing test first
 ```
 
-Exceptions require explicit user permission or a clear non-behavioural category, such as docs-only, formatting-only, generated files, or configuration that cannot reasonably be tested.
+For every feature, bug fix, refactor, or behaviour change:
 
-If you accidentally write production code first, either remove it before writing the test or clearly tell the user and ask whether to continue.
+1. Write one minimal test that describes desired behaviour.
+2. Run the test and watch it fail.
+3. Confirm the failure is for the expected reason, not syntax or setup.
+4. Write the simplest production code that can pass.
+5. Run the test and watch it pass.
+6. Run relevant surrounding tests.
+7. Refactor only while tests stay green.
+8. Repeat for the next behaviour.
 
-## Verification Before Claims
+If production code was written first, delete it and restart from a failing test. Do not keep it as reference. Do not adapt it while writing tests.
 
-Before saying something is fixed, complete, passing, or working:
-1. Identify the command or evidence that proves it.
-2. Run the full command freshly when possible.
+## Good test standards
+
+Prefer tests that:
+
+- exercise real production code
+- verify one behaviour at a time
+- have clear behaviour-focused names
+- show the intended API or user outcome
+- cover edge cases and errors when relevant
+
+Avoid tests that primarily verify mocks, implementation details, or test-only hooks. Use mocks only when unavoidable, and keep them close to external boundaries.
+
+## Verification gate
+
+Before making any claim that work is complete, passing, fixed, clean, ready, or good:
+
+1. Identify the command or check that proves the claim.
+2. Run the full command fresh in the current session.
 3. Read the output and exit code.
-4. State the result with evidence.
+4. Confirm it proves the claim.
+5. State the result with evidence.
 
-Do not claim tests pass based on memory, expectation, or old output.
+Examples of required evidence:
 
-## Stop Conditions
+- tests pass: test command output with zero failures
+- linter clean: lint command output with zero errors
+- build succeeds: build command exit 0
+- bug fixed: regression test for the original symptom passes
+- task complete: plan checklist item verified and relevant commands passed
 
-Stop and ask rather than guessing if:
-- The plan is contradictory or missing required details.
-- A dependency, environment, credential, migration, or fixture is unavailable.
-- Verification fails repeatedly.
-- The requested change conflicts with the spec.
-- Fixing a review issue requires a larger design decision.
-- Review feedback is unclear in a way that affects implementation order or correctness.
+Never rely on previous runs, agent reports, intuition, partial output, or phrases like should, probably, seems, or looks.
 
-## Dev Notes
+## Handling blockers
 
-When useful, create or update:
+Stop and ask for help when:
 
-`docs/sp/dev-notes/YYYY-MM-DD--<slug>-dev-notes.md`
+- a dependency is missing and cannot be installed safely
+- the plan references files or symbols that do not exist
+- an instruction is ambiguous enough to risk wrong behaviour
+- verification fails repeatedly after reasonable fixes
+- a test cannot be made to fail for the intended reason
+- repo evidence contradicts the plan
+- a destructive or risky operation was not explicitly approved
 
-Suggested structure:
+When stopping, report:
 
-```markdown
-# <Feature Name> Dev Notes
+- the exact step
+- what you tried
+- the evidence/output
+- the smallest decision needed to continue
 
-Plan: docs/sp/plans/...
-Latest Review: docs/sp/reviews/... (if applicable)
+## Review checkpoints
 
-## Completed
+Use `sp-review`:
 
-## Verification Run
+- after each completed task when the plan requires it
+- after major feature completion
+- before merge or PR
+- when stuck and a fresh review would help
 
-## Deviations From Plan
+If subagents are available, use a fresh `general-purpose` reviewer with the bundled review template from `sp-review`. If not, perform the review inline using `sp-review`.
 
-## Issues Addressed
+Fix Critical issues immediately. Fix Important issues before proceeding unless the user explicitly accepts the risk. Track Minor issues for later.
 
-## Follow-Up Risks
-```
+## Completion
 
-## Final Response Format
+After all tasks are complete:
 
-Include:
-- What you changed.
-- Which plan tasks or review issues were completed.
-- Verification commands run and their results.
-- Anything not completed.
-- Suggested review command.
+1. Reread the plan and create a requirement checklist.
+2. Verify every planned requirement has evidence.
+3. Run final tests/lint/build/manual checks as appropriate.
+4. Request final review with `sp-review`.
+5. Present merge/PR/keep/discard options if working on a branch.
+6. Do not claim done until the final verification gate passes.
 
-End with one of:
+A valid completion report includes:
 
-```text
-Next suggested command: /sp-review <spec-path> <plan-path>
-```
-
-or, when fixing a review:
-
-```text
-Next suggested command: /sp-review <spec-path> <plan-path> <previous-review-path>
-```
+- tasks completed
+- files changed
+- commands run and results
+- review findings and fixes
+- remaining risks or follow-ups
+- branch/PR status when relevant

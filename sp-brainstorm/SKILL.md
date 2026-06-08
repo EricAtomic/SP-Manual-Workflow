@@ -1,169 +1,154 @@
 ---
 name: sp-brainstorm
-description: Use manually at the start of any feature, product change, refactor, bug-adjacent behaviour change, or engineering idea before planning or coding. Clarify the request, inspect existing project context, ask targeted questions, compare approaches, and write an approved specification to docs/sp/specs/. Even simple changes need at least a short design. Do not generate an implementation plan, modify production code, commit, or invoke the next stage automatically.
+description: manual brainstorming and design-spec workflow for software, product, feature, component, architecture, behaviour-change, or implementation requests. use before writing code, scaffolding projects, editing production behaviour, or starting an implementation plan. forces context discovery, scope checks, one-question-at-a-time clarification, approach trade-offs, design approval, written spec self-review, user spec-review gate, and handoff only to sp-plan.
 ---
 
 # SP Brainstorm
 
-Turn a vague request into a reviewed specification. This is stage 1 of a manual, segmented workflow:
+Use this skill to turn an idea into an approved design/specification before implementation. Do not write code, scaffold files, change behaviour, or start implementation planning until the user approves the design and the written spec has passed review.
 
-`/sp-brainstorm -> /sp-plan -> /sp-develop -> /sp-review -> /sp-develop ...`
+## Hard gate
 
-## Stage Contract
+Every project goes through a design gate. Even a small utility, config change, UI tweak, or refactor needs at least a short design summary and explicit approval. If you are tempted to say it is too simple, write a smaller design instead of skipping the gate.
 
-Input:
-- A user idea, problem, feature request, refactor goal, or product change.
-- Optional repo context, docs, constraints, examples, screenshots, tickets, or previous decisions.
+The only normal handoff after this skill is `sp-plan`.
 
-Output:
-- One written spec at `docs/sp/specs/YYYY-MM-DD--<slug>-spec.md`.
-- A short final message containing the spec path and the suggested next manual command.
+## Workflow
 
-Hard boundaries:
-- Do not write implementation plans.
-- Do not edit production code.
-- Do not start development.
-- Do not auto-invoke `/sp-plan`; only suggest it.
-- Do not commit unless the user explicitly asks.
+Create and work through a visible task list for these steps:
 
-## Non-Negotiable Design Gate
+1. Explore current context.
+2. Check whether the scope is too large for one spec.
+3. Offer a visual companion when upcoming decisions would be clearer visually.
+4. Ask clarifying questions one at a time.
+5. Propose two or three approaches with trade-offs and a recommendation.
+6. Present the design in readable sections and get approval.
+7. Write the design spec.
+8. Run inline spec self-review and fix issues.
+9. Ask the user to review the written spec.
+10. Hand off to `sp-plan` only after approval.
 
-Do not skip this stage because the change looks simple. For a tiny change, the design can be only a few paragraphs, but it must still clarify intent, constraints, and acceptance criteria before planning or coding.
+## Context discovery
 
-## Process
+Before asking detailed questions, inspect the available context:
 
-### 1. Inspect Context First
+- repository structure, relevant files, tests, docs, and configs
+- recent commits or existing plans/specs when available
+- uploaded files, screenshots, API notes, product requirements, or user-provided examples
+- existing conventions and architecture boundaries
 
-Before asking detailed questions, inspect the current project when available:
-- Existing README, docs, architecture notes, package files, tests, and recent conventions.
-- Similar features or modules already present.
-- Obvious constraints from framework, platform, deployment, APIs, persistence, auth, or UI patterns.
-- Prior specs or plans in `docs/sp/` or `docs/superpowers/` that may affect this work.
+For brownfield work, ground questions and design choices in observed files, modules, APIs, and test patterns. Do not ask the user to restate facts you can inspect.
 
-If context is unavailable, say so and continue with best-effort questions. Make assumptions explicit in the spec.
+## Scope check and decomposition
 
-### 2. Scope Gate
+If the request contains multiple independent subsystems, stop broad refinement and call out the scope problem. Examples include building a whole platform with auth, billing, analytics, notifications, and storage in one request.
 
-If the request contains multiple independent systems, pause and decompose it.
+Help decompose the work into sub-projects. Each sub-project should have its own spec, plan, implementation, and review cycle. Brainstorm the first sub-project through the normal workflow.
 
-Examples that need decomposition:
-- A platform with auth, billing, chat, analytics, and admin tools.
-- A mobile feature plus backend changes plus migration plus analytics.
-- A rewrite, new UI surface, and data model change that can ship independently.
+## Visual companion
 
-Ask the user which sub-project should be specified first. Each sub-project gets its own spec-plan-develop-review loop.
+When visual material would materially improve the conversation, offer it once in its own message before detailed questioning. Examples: UI layouts, wizard flows, information architecture, diagrams, architecture topology, visual alternatives, or side-by-side mocks.
 
-### 3. Ask Questions One at a Time
+Use this exact shape, adapted only for available tools:
 
-Ask exactly one question per turn when clarification is needed.
+> Some of this might be easier to explain visually. I can create diagrams, mockups, comparisons, or other visual aids as we go. Want to use visuals for the parts where they help?
 
-Prefer multiple-choice questions when possible. Focus on:
-- User goal and success criteria.
-- Required behaviours and non-goals.
-- Users, states, edge cases, errors, permissions, and data flow.
-- Compatibility, migration, performance, security, accessibility, and observability.
-- Acceptance tests or examples.
+The offer must be a standalone message. Do not combine it with clarifying questions or summaries. If the user declines, continue text-only.
 
-Stop asking when you have enough to propose a design. Do not over-interview for trivial changes.
+For each later question, choose visual or text based on whether seeing the answer would be clearer than reading it. Do not make every UI/product question visual by default.
 
-### 4. Present Options
+## Clarifying questions
 
-Before settling, present 2-3 viable approaches with trade-offs.
+Ask one question per message. Prefer multiple-choice questions when they reduce effort, but use open-ended questions when nuance matters. Focus on:
 
-For each option include:
-- What it changes.
-- Why it is attractive.
-- Main risk or cost.
-- When to choose it.
+- purpose and user value
+- constraints and non-goals
+- success criteria
+- data, API, UI, and integration boundaries
+- failure modes and error handling
+- testability and rollout constraints
 
-Lead with your recommendation and explain why.
+Do not run a long interview after the design is already clear. Stop when enough information exists to propose approaches.
 
-### 5. Present the Proposed Spec
+## Approach exploration
 
-Present a concise design for user approval. Scale depth to complexity.
+Present two or three viable approaches before choosing. For each approach, state:
 
-Cover when relevant:
-- Goal and non-goals.
-- User-facing behaviour.
-- Architecture and component boundaries.
-- Data model or API changes.
-- State flow, errors, and edge cases.
-- Testing and acceptance criteria.
-- Rollout, migration, compatibility, and rollback.
-- Security, privacy, and performance considerations.
+- what it optimises for
+- complexity and implementation risk
+- trade-offs and likely failure modes
+- when it would be the right choice
 
-Design for isolation and clarity:
-- Prefer small units with one clear purpose.
-- Define interfaces so a reader can understand what a unit does without reading internals.
-- Follow existing project patterns unless a targeted improvement is needed for this work.
-- Avoid unrelated refactors.
+Lead with the recommended approach and explain why it best fits the context. Apply YAGNI aggressively.
 
-Ask for approval before writing the file.
+## Design presentation
 
-### 6. Write the Spec
+Present the design in sections scaled to complexity. Simple sections can be a few sentences; complex sections should be short enough for the user to review comfortably.
 
-After approval, write the spec to:
+Cover the relevant parts:
 
-`docs/sp/specs/YYYY-MM-DD--<slug>-spec.md`
+- goal and non-goals
+- architecture and boundaries
+- data flow and state ownership
+- UI or API contract
+- error handling and edge cases
+- test strategy
+- rollout or migration, when relevant
 
-Use this structure:
+After each meaningful section, ask whether it looks right before continuing. Revise when the user pushes back.
 
-```markdown
-# <Feature Name> Spec
+## Design quality rules
 
-Status: Approved for planning
-Date: YYYY-MM-DD
-Owner: <user or unknown>
+Design units with clear responsibilities and well-defined interfaces. Each unit should be understandable and testable independently.
 
-## Summary
+For each unit, be able to answer:
 
-## Goals
+- what does it do?
+- how is it used?
+- what does it depend on?
+- can its internals change without breaking consumers?
 
-## Non-Goals
+For existing codebases, follow established patterns. Include targeted improvements only when they directly reduce risk or make the requested work cleaner. Do not propose unrelated refactors.
 
-## Current Context
+## Written spec
 
-## Proposed Design
+After the user approves the design, save the validated spec when filesystem access is available:
 
-## User / System Behaviour
+`docs/superpowers/specs/YYYY-MM-DD--design.md`
 
-## Components and Boundaries
+Use the user's preferred location when they specify one. Commit the spec if the environment has git access and committing is appropriate.
 
-## Data, API, or Persistence Changes
+A good spec contains:
 
-## Error Handling and Edge Cases
+- title, date, and status
+- goal and non-goals
+- approved approach and alternatives considered
+- architecture, boundaries, and data flow
+- affected files/modules if known
+- user-visible behaviour or API contract
+- error handling
+- validation and testing strategy
+- risks, assumptions, and open questions
 
-## Security, Privacy, and Performance
+## Inline spec self-review
 
-## Testing and Acceptance Criteria
+After writing the spec, review it yourself and fix issues inline. Do not dispatch a separate reviewer merely for this review.
 
-## Rollout / Migration / Backout
+Check:
 
-## Open Questions
-```
+1. Placeholder scan: no TBD, TODO, incomplete sections, or vague requirements.
+2. Internal consistency: no contradictions between features, architecture, and tests.
+3. Scope check: focused enough for one implementation plan.
+4. Ambiguity check: requirements cannot be read two materially different ways. If they can, choose one and make it explicit.
 
-Open Questions should be empty or explicitly marked as non-blocking. A spec with blocking open questions is not ready for `/sp-plan`.
+## User review gate
 
-### 7. Self-Review the Spec
+After self-review, ask the user to review the spec before planning. Use this structure:
 
-Before final response, review the written spec for:
-- Placeholders such as TBD, TODO, later, etc.
-- Contradictions.
-- Requirements not covered by acceptance criteria.
-- Ambiguous phrasing that could be interpreted two ways.
-- Scope too large for one plan.
-- Missing edge cases or failure states.
-- Architecture/component boundaries that are unclear or too broad.
+> Spec written and reviewed at `[path]`. Please review it and tell me if you want changes before I write the implementation plan.
 
-Fix issues inline. No separate reviewer/subagent loop is required for this manual workflow.
+Wait for the user's response. If they request changes, update the spec and rerun self-review. Only proceed to `sp-plan` once the user approves.
 
-## Final Response Format
+## Handoff
 
-End with:
-
-```text
-Spec written to: docs/sp/specs/YYYY-MM-DD--<slug>-spec.md
-Next suggested command: /sp-plan docs/sp/specs/YYYY-MM-DD--<slug>-spec.md
-```
-
-If the user did not approve the spec yet, do not write it; ask for approval or changes.
+After approval, invoke or follow `sp-plan` to create the implementation plan. Do not jump to coding, scaffolding, review, deployment, or any other skill.

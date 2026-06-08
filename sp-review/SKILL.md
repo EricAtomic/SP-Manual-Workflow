@@ -1,195 +1,155 @@
 ---
 name: sp-review
-description: Use manually after sp-develop to review current code changes against a spec and plan, or to re-review fixes from a previous review. Inspect the diff and relevant files, verify evidence where possible, produce a review report at docs/sp/reviews/, and return PASS, REQUEST_CHANGES, or BLOCKED. Calibrate severity, include strengths, be specific with file/line references, and do not modify code.
+description: manual and subagent-ready code review workflow for completed tasks, major features, bug fixes, refactors, or pre-merge checks. use after each implementation task, at natural checkpoints, before pull requests or merges, when stuck, or when the user asks for a review. supports git-range review, severity-calibrated findings, self-contained general-purpose reviewer prompts, inline fallback review, and strict handling of critical and important issues.
 ---
 
 # SP Review
 
-Review implementation work against the approved spec and execution plan. This is the quality gate in the manual loop.
+Use this skill to review completed work against requirements and code quality standards before issues cascade.
 
-Manual loop:
+Core principle: review early, review often, and give the reviewer only the context needed to evaluate the work product.
 
-`/sp-develop -> /sp-review -> /sp-develop -> /sp-review`
+## When to review
 
-## Stage Contract
+Review is mandatory:
 
-Input:
-- Spec path, usually `docs/sp/specs/YYYY-MM-DD--<slug>-spec.md`.
-- Plan path, usually `docs/sp/plans/YYYY-MM-DD--<slug>-plan.md`.
-- Optional prior review report path.
-- Optional dev notes path.
-- Optional git base/head range.
+- after each task in subagent-driven execution
+- after major feature completion
+- before merging to main/master
+- before creating a pull request when the change is substantial
 
-Output:
-- A review report at `docs/sp/reviews/YYYY-MM-DD--<slug>-review-N.md`.
-- Status: `PASS`, `REQUEST_CHANGES`, or `BLOCKED`.
-- If changes are requested, a concise list that can be passed directly to `/sp-develop`.
+Review is optional but valuable:
 
-Hard boundaries:
-- Do not edit code.
-- Do not fix issues during review.
-- Do not approve without evidence.
-- Do not rely only on the developer's summary; inspect the actual diff and relevant files.
-- Do not auto-invoke `/sp-develop`; only suggest it.
-- Do not mark nitpicks as Critical.
+- when stuck
+- before refactoring
+- after fixing a complex bug
+- when implementation diverged from the plan
+- when the risk profile changed
 
-## Review Inputs
+## Choose review mode
 
-Read:
-- The spec.
-- The plan.
-- Current git diff, staged diff, or requested commit range.
-- Dev notes if present.
-- Prior review report if this is a re-review.
-- Relevant tests and implementation files.
+### Subagent mode
 
-If git metadata is unavailable, review the available changed files and state the limitation.
+If the platform supports subagents, dispatch a fresh `general-purpose` reviewer. Do not rely on a removed named `code-reviewer` agent. Use `references/code-reviewer.md` as the prompt template.
 
-## Review Procedure
+### Inline mode
 
-### 1. Establish Scope
+If subagents are unavailable, perform the same review yourself in the current session. Read the diff and relevant files directly. Do not pretend an independent reviewer checked the work.
 
-Identify:
-- What the spec required.
-- Which plan tasks should be complete.
-- What files changed.
-- What prior review issues, if any, should have been addressed.
-- Whether any plan issue, rather than implementation issue, is blocking progress.
+## Prepare the review
 
-### 2. Inspect Against Spec
+1. Identify the review scope:
+   - task description or feature summary
+   - plan, spec, ticket, or acceptance criteria
+   - git range or changed files
+2. Get SHAs when git is available:
 
-Check for:
-- Missing required behaviour.
-- Behaviour not requested by the spec.
-- Incorrect edge cases, error handling, loading states, permissions, or data flow.
-- Security, privacy, performance, accessibility, compatibility, or migration risks.
+```bash
+BASE_SHA=$(git rev-parse HEAD~1)   # or origin/main / task start commit
+HEAD_SHA=$(git rev-parse HEAD)
+```
 
-### 3. Inspect Against Plan
+3. Inspect:
 
-Check for:
-- Unchecked or skipped tasks.
-- Deviations from plan that are not documented.
-- Incomplete tests.
-- Files modified outside expected scope.
-- Commands or verification steps not run.
+```bash
+git diff --stat "$BASE_SHA..$HEAD_SHA"
+git diff "$BASE_SHA..$HEAD_SHA"
+```
 
-### 4. Inspect Code Quality
+If git is unavailable, use the changed file list and file contents as the review scope.
 
-Check for:
-- Fragile or over-complex code.
-- Duplicated logic.
-- Hidden coupling.
-- Naming or boundary problems.
-- Inconsistent project patterns.
-- Poor test quality, excessive mocks, or tests that assert implementation details instead of behaviour.
-- Missing documentation where users or future maintainers need it.
+## What to check
 
-### 5. Verify Evidence
+Review for:
 
-Run appropriate tests if possible, especially targeted tests named in the plan. If running commands is unsafe or unavailable, say so clearly and mark verification as limited.
+- plan and requirement alignment
+- missing functionality or unjustified deviations
+- clean separation of concerns
+- type safety and API compatibility
+- error handling and edge cases
+- security, privacy, data loss, and injection risks
+- migrations, rollback, and backward compatibility
+- performance and scalability issues that matter now
+- tests that verify real behaviour rather than mocks
+- missing integration or regression tests
+- documentation or user-facing behaviour updates
+- build/lint/test verification evidence
 
-Do not claim tests pass unless you actually ran them in this review or the output is directly available in the current context.
+## Severity calibration
 
-## Severity Calibration
+Not everything is Critical. Categorise by actual impact.
 
-Use actual severity, not dramatic language.
+**Critical:** must fix before proceeding. Examples: data loss, security issue, broken core functionality, crash, destructive migration bug, failing required tests, exposed secrets.
 
-- Critical: unsafe, data loss, security/privacy issue, broken core behaviour, or cannot merge.
-- Important: required behaviour missing, meaningful bug, inadequate test, serious maintainability issue, or production-readiness gap.
-- Minor: cleanup, naming, small refactor, documentation polish, or non-blocking improvement.
+**Important:** should fix before proceeding. Examples: missing requirement, significant test gap, poor error handling, architecture mismatch, compatibility issue, confusing user-visible behaviour.
 
-Status rules:
+**Minor:** nice to have. Examples: naming polish, small duplication, documentation improvement, local style issue, non-blocking optimisation.
 
-- `PASS`: No Critical or Important issues remain. Minor issues may be listed as optional.
-- `REQUEST_CHANGES`: One or more Critical or Important issues must be fixed by `/sp-develop`.
-- `BLOCKED`: Review cannot be completed because required context, build, tests, credentials, or files are missing.
+Acknowledge specific strengths before listing issues. Accurate praise makes the review more useful.
 
-If you find significant deviations from the plan, flag them specifically so the developer can confirm whether they were intentional. If the plan itself is wrong or incomplete, say so rather than blaming implementation.
+## Output format
 
-## Review Report Format
-
-Save to:
-
-`docs/sp/reviews/YYYY-MM-DD--<slug>-review-N.md`
-
-Use this structure:
+Use this format:
 
 ```markdown
-# <Feature Name> Review N
-
-Status: PASS | REQUEST_CHANGES | BLOCKED
-Date: YYYY-MM-DD
-Spec: docs/sp/specs/...
-Plan: docs/sp/plans/...
-Previous Review: docs/sp/reviews/... (if any)
-
-## Summary
-
 ## Strengths
+- [specific strength with file/line when useful]
 
-## Scope Reviewed
+## Issues
 
-## Verification Evidence
+### Critical (must fix)
+1. **[title]**
+   - File: `path:line`
+   - Problem: [what is wrong]
+   - Why it matters: [impact]
+   - Fix: [specific fix]
 
-## Findings
+### Important (should fix)
+1. ...
 
-### Critical
+### Minor (nice to have)
+1. ...
 
-### Important
+## Recommendations
+- [process or design improvements]
 
-### Minor
-
-## Required Changes for /sp-develop
-
-1. [severity] <specific issue>
-   - Location: `path/to/file.ext:line` or area
-   - Problem:
-   - Why it matters:
-   - Required fix:
-   - Suggested verification:
-
-## Re-Review Checklist
-
-- [ ] Critical issues addressed
-- [ ] Important issues addressed
-- [ ] Tests updated and passing
-- [ ] No new out-of-scope changes
+## Assessment
+**Ready to proceed:** [yes | no | with fixes]
+**Reasoning:** [1-2 sentence technical assessment]
 ```
 
-If status is PASS, the Required Changes section should say `None`.
+If no issues are found, still explain what you checked and why the change is ready.
 
-## Red Flags
+## Acting on feedback
+
+- Fix Critical issues immediately.
+- Fix Important issues before proceeding unless the user explicitly accepts the risk.
+- Track Minor issues for later.
+- Push back only with technical evidence from code, tests, or requirements.
+- If the reviewer found a flaw in the plan rather than the implementation, update the plan or return to planning.
+
+After fixes, rerun relevant verification and review the fix scope again.
+
+## Red flags
 
 Never:
-- Say "looks good" without checking.
-- Give feedback on code you did not read.
-- Be vague, such as "improve error handling" without saying where, why, and how to verify.
-- Approve with open Critical or Important findings.
-- Fail the review for style-only preferences.
 
-## Final Response Format
+- skip review because the change is simple
+- say looks good without reading the diff
+- mark nitpicks as Critical
+- ignore Critical issues
+- proceed with unresolved Important issues by default
+- review only summaries or agent reports
+- give vague feedback such as improve error handling without specifics
+- claim a subagent reviewed the code when you reviewed inline
 
-End with:
+## Subagent prompt template
 
-For `PASS`:
+When dispatching a reviewer, use the bundled template at `references/code-reviewer.md` and fill the placeholders:
 
-```text
-Review status: PASS
-Review written to: docs/sp/reviews/YYYY-MM-DD--<slug>-review-N.md
-```
+- `{DESCRIPTION}` - what was implemented
+- `{PLAN_OR_REQUIREMENTS}` - plan, requirements, or acceptance criteria
+- `{BASE_SHA}` - starting commit
+- `{HEAD_SHA}` - ending commit
 
-For `REQUEST_CHANGES`:
-
-```text
-Review status: REQUEST_CHANGES
-Review written to: docs/sp/reviews/YYYY-MM-DD--<slug>-review-N.md
-Next suggested command: /sp-develop docs/sp/reviews/YYYY-MM-DD--<slug>-review-N.md
-```
-
-For `BLOCKED`:
-
-```text
-Review status: BLOCKED
-Review written to: docs/sp/reviews/YYYY-MM-DD--<slug>-review-N.md
-Blocking issue: <one sentence>
-```
+Keep the reviewer context focused. Do not include hidden reasoning or the entire conversation history unless it is part of the requirements.

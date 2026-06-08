@@ -1,180 +1,200 @@
 ---
 name: sp-plan
-description: "Use manually after a spec exists and before editing code. Read an approved spec, inspect the repository, and create a detailed execution plan at docs/sp/plans/. The plan must be concrete enough for a separate development session to execute with limited context: exact files, test-first steps, commands, expected outcomes, and review hooks. Do not modify production code, run implementation, commit, or invoke the next stage automatically."
+description: manual implementation planning workflow for approved specs, requirements, architecture notes, or design documents before code changes. use to convert a spec into exact bite-sized engineering tasks with file paths, complete code where relevant, test-first steps, verification commands, commits, scope checks, file-structure mapping, no-placeholder enforcement, inline self-review, and execution handoff to subagent-driven work or sp-develop.
 ---
 
 # SP Plan
 
-Convert an approved specification into a concrete execution plan. This is stage 2 of a manual, segmented workflow:
+Use this skill after a design/specification or clear requirements exist. The output is a complete implementation plan that a capable engineer or agent can execute without project context.
 
-`/sp-brainstorm -> /sp-plan -> /sp-develop -> /sp-review -> /sp-develop ...`
+Announce that you are using `sp-plan` to create the implementation plan. Do not touch production code while planning.
 
-## Stage Contract
+## Inputs
 
-Input:
-- A spec file path, usually `docs/sp/specs/YYYY-MM-DD--<slug>-spec.md`.
-- Optional user constraints such as target milestone, preferred implementation order, allowed scope, or test command.
+Use the strongest available source of truth:
 
-Output:
-- One plan at `docs/sp/plans/YYYY-MM-DD--<slug>-plan.md`.
-- A short final message containing the plan path and the suggested next manual command.
+- approved `sp-brainstorm` spec
+- user-provided requirements or ticket
+- uploaded PRD/design/API docs
+- repository evidence from relevant files, tests, and configs
 
-Hard boundaries:
-- Do not edit production code.
-- Do not implement the plan.
-- Do not auto-invoke `/sp-develop`; only suggest it.
-- Do not commit unless the user explicitly asks.
+If requirements are still too vague to plan responsibly, return to `sp-brainstorm` rather than inventing details.
 
-## Planning Assumption
+## Save location
 
-Write for a capable developer or agent who has limited project context and may execute the plan in a fresh session. The plan must carry enough context to prevent guessing.
+Save plans to:
 
-## Process
+`docs/superpowers/plans/YYYY-MM-DD--implementation-plan.md`
 
-### 1. Load and Check the Spec
+Use the user's preferred location when specified.
 
-Read the spec completely. Confirm it is ready for planning:
-- It has a goal, non-goals, proposed design, and acceptance criteria.
-- Blocking open questions are resolved.
-- Scope is small enough for one plan.
-- The feature can produce working, testable software on its own.
+## Scope check
 
-If the spec is too broad, propose a split and stop. Do not produce a vague mega-plan.
+Before task decomposition, check whether the spec spans independent subsystems. If it does, suggest separate plans, one per subsystem. Each plan must produce working, testable software on its own.
 
-### 2. Inspect the Repo
+Do not write a single giant plan that mixes unrelated workstreams unless the user explicitly insists. If they insist, make phase boundaries and risks explicit.
 
-Before writing tasks, inspect the codebase enough to make concrete choices:
-- Existing structure and naming conventions.
-- Similar tests and test helpers.
-- Build and test commands.
-- Relevant APIs, models, UI components, routes, state containers, migrations, or config.
+## File structure map
 
-If you cannot inspect the repo, state the limitation and write assumptions explicitly in the plan.
+Before defining tasks, map the files to create or modify and the responsibility of each file. This is where decomposition decisions are locked in.
 
-### 3. Map File Responsibilities
+Include:
 
-Before task decomposition, list the expected files:
-- Files to create.
-- Files to modify.
-- Tests to add or update.
-- Docs/config/migration files if relevant.
+- exact paths for existing files when known
+- proposed paths for new files
+- ownership/responsibility of each file
+- interfaces between files/modules
+- tests associated with each unit
+- migration/config/docs files when relevant
 
-Prefer small, focused files with clear responsibilities. Split by responsibility and change affinity, not by abstract technical layer. Avoid unrelated refactors. If a touched file is already too large or tangled, include only a targeted cleanup that supports this feature.
+Rules:
 
-### 4. Write Bite-Sized Tasks
+- Prefer small focused files over large files that do too much.
+- Split by responsibility and change locality, not by arbitrary technical layers.
+- Follow existing codebase patterns.
+- If a file you must modify is already unwieldy, include a focused split when it reduces risk.
+- Do not restructure unrelated code.
 
-Each task should produce a coherent, reviewable increment. Each step should be one concrete action, generally 2-5 minutes of work.
+## Plan header
 
-For each task include:
-- Objective.
-- Exact files.
-- Preconditions.
-- Steps using checkbox syntax.
-- Test-first instruction where behaviour changes.
-- Exact commands and expected outcomes.
-- Commit suggestion, but do not require commit unless the user wants commits.
-
-Good steps are concrete:
-- Write a failing test for a named behaviour.
-- Run a named test command and expect a specific failure.
-- Implement the smallest production change.
-- Run targeted tests and expect pass.
-- Run a broader verification command if needed.
-
-Bad steps are vague:
-- Add error handling.
-- Write tests.
-- Implement the feature.
-- Similar to previous task.
-- Clean up code.
-
-### 5. No Placeholders
-
-These are plan failures and must be fixed before saving:
-- `TBD`, `TODO`, `later`, `fill in details`, or `as needed`.
-- "Add appropriate error handling" without exact conditions and expected behaviour.
-- "Write tests" without naming test files, behaviours, and commands.
-- "Similar to Task N" instead of repeating necessary detail.
-- Referencing types, functions, flags, routes, or schema fields not defined in the plan or already present in the repo.
-- Code-changing steps that do not show what shape the code should take when the details matter.
-
-### 6. Include Review Hooks
-
-The plan must make review easy. Include:
-- How to verify each task.
-- What visible behaviour should change.
-- What files or areas reviewers should inspect.
-- Known risks and expected edge cases.
-- Which deviations are acceptable and which require user approval.
-
-### 7. Save the Plan
-
-Save to:
-
-`docs/sp/plans/YYYY-MM-DD--<slug>-plan.md`
-
-Use this structure:
+Every plan starts with this header:
 
 ```markdown
-# <Feature Name> Execution Plan
+# [Feature Name] Implementation Plan
 
-Status: Ready for development
-Date: YYYY-MM-DD
-Spec: docs/sp/specs/YYYY-MM-DD--<slug>-spec.md
+> **For agentic workers:** implement task-by-task. Prefer subagent-driven development when the platform supports it; otherwise use `sp-develop` for inline execution with checkpoints.
 
-## Goal
+Steps use checkbox (`- [ ]`) syntax for tracking.
 
-## Architecture Summary
+**Goal:** [one sentence]
+**Architecture:** [2-3 sentences]
+**Tech stack:** [key technologies/libraries]
+**Source of truth:** [spec/ticket/docs/repo evidence]
 
-## Assumptions
+---
+```
 
-## File Map
+## Task granularity
 
-## Verification Strategy
+Make each task small enough to execute safely and review independently. Within each task, every step should be one action, usually 2-5 minutes:
 
-## Tasks
+- write the failing test
+- run it and verify it fails for the expected reason
+- implement the minimal code to pass
+- run tests and verify they pass
+- refactor only after green
+- run relevant verification
+- commit
 
-### Task 1: <name>
+Do not batch multiple behaviours into one test step. Do not hide work in vague phrases.
 
-**Objective:**
+## Task template
+
+Use this structure for every task:
+
+````markdown
+### Task N: [Component or behaviour]
+
+**Purpose:** [what this task proves or enables]
 
 **Files:**
-- Create:
-- Modify:
-- Test:
+- Create: `exact/path/to/new_file.ext`
+- Modify: `exact/path/to/existing_file.ext:line-range-if-known`
+- Test: `exact/path/to/test_file.ext`
 
-**Steps:**
-- [ ] Step 1: Write the failing test for ...
-- [ ] Step 2: Run `...` and confirm it fails because ...
-- [ ] Step 3: Implement ...
-- [ ] Step 4: Run `...` and confirm it passes
-- [ ] Step 5: Update docs or notes if needed
+- [ ] **Step 1: Write the failing test**
+  ```language
+  [complete test code or exact test change]
+  ```
 
-**Review focus:**
+- [ ] **Step 2: Run test to verify it fails**
+  Run: `exact command`
+  Expected: FAIL because `[specific missing behaviour]`, not syntax/setup errors.
 
-## Risks and Rollback
+- [ ] **Step 3: Write minimal implementation**
+  ```language
+  [complete implementation code or exact patch outline]
+  ```
 
-## Done Criteria
-```
+- [ ] **Step 4: Run test to verify it passes**
+  Run: `exact command`
+  Expected: PASS.
 
-### 8. Self-Review
+- [ ] **Step 5: Run broader verification**
+  Run: `exact command`
+  Expected: exit 0 / no failures / no warnings that matter.
 
-Before final response, check:
-- Every spec requirement maps to at least one task.
-- Every task has exact file paths or explicit discovery instructions.
-- Every behavioural change has a test-first step unless explicitly exempted.
-- No placeholders or vague plan failures remain.
-- Commands are concrete, scoped, and include expected outcomes.
-- Types, names, routes, config keys, and method signatures are consistent across tasks.
-- The plan can be executed in a fresh session with limited context.
+- [ ] **Step 6: Commit**
+  ```bash
+  git add [paths]
+  git commit -m "[type]: [specific message]"
+  ```
+````
 
-Fix issues inline. No separate reviewer/subagent loop is required for this manual workflow.
+For non-code steps such as docs, config, generated artefacts, or manual verification, still provide exact file paths, commands, expected output, and completion evidence.
 
-## Final Response Format
+## No placeholders
 
-End with:
+These are plan failures. Never leave them in the final plan:
+
+- TBD, TODO, fill in later, implement later
+- add appropriate error handling
+- handle edge cases
+- write tests for the above
+- similar to Task N
+- update relevant files
+- run the tests
+- code omitted for brevity
+- references to functions, classes, properties, types, or files not introduced earlier
+- steps that describe a change without showing how to make or verify it
+
+If a step changes code, include complete code or a precise patch-level instruction. Repeat details even if a later task resembles an earlier one; tasks may be executed out of order.
+
+## TDD requirements in plans
+
+For behaviour changes, every implementation task must follow red-green-refactor:
+
+1. write one minimal failing test for desired behaviour
+2. run it and confirm it fails correctly
+3. write only enough production code to pass
+4. run it and confirm it passes
+5. refactor while keeping tests green
+
+Do not include production implementation before the failing test step.
+
+## Verification requirements
+
+Every task needs exact verification commands and expected results. Include the narrow test, relevant wider test suite, lint/type/build checks, and manual verification when applicable.
+
+When the project has established commands, use those. If unknown, infer sensible commands from repo files and mark assumptions explicitly.
+
+## Inline self-review
+
+After writing the full plan, review it yourself and fix issues inline. Do not dispatch a separate plan reviewer just for this check.
+
+Check:
+
+1. Spec coverage: every requirement maps to at least one task.
+2. Placeholder scan: none of the no-placeholder failures remain.
+3. Type/name consistency: names and signatures introduced in early tasks match later tasks.
+4. File structure consistency: every planned file has a responsibility and matching tests or verification.
+5. TDD integrity: no production step appears before the failing-test step.
+6. Buildability: commands, paths, and imports are plausible in the observed codebase.
+
+If a requirement has no task, add one. If a task has no clear requirement, remove it or justify it.
+
+## Handoff
+
+After saving and self-reviewing the plan, offer execution choice:
 
 ```text
-Plan written to: docs/sp/plans/YYYY-MM-DD--<slug>-plan.md
-Next suggested command: /sp-develop docs/sp/plans/YYYY-MM-DD--<slug>-plan.md
+Plan complete and saved to `[path]`.
+
+Execution options:
+1. Subagent-driven execution, if this platform supports task subagents.
+2. Inline execution in this session using `sp-develop`.
+
+Which approach should we use?
 ```
+
+If the user chooses subagent-driven execution, dispatch fresh implementers per task when available and review between tasks. If the user chooses inline execution or subagents are unavailable, follow `sp-develop`.

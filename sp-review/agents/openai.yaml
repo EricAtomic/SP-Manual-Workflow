@@ -1,0 +1,10 @@
+interface:
+  display_name: SP Review
+  short_description: Manual and subagent-ready code review workflow.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

@@ -1,0 +1,10 @@
+interface:
+  display_name: SP Plan
+  short_description: Manual implementation plan writer with TDD task decomposition.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
